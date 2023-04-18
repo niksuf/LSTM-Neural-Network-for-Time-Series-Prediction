@@ -14,6 +14,5 @@
 
 TODO:
 1. Вывести график с предсказанием на час вперед от последних полученных данных.
-2. Изменить алгоритм нормализации для повышения точности оценки.
 
 Часть кода была позаимствована из [статьи](https://www.altumintelligence.com/articles/a/Time-Series-Prediction-Using-LSTM-Deep-Neural-Networks "Статья").
