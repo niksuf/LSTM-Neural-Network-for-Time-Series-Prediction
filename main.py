@@ -1,5 +1,4 @@
 import requests
-from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -24,7 +23,8 @@ def normalize_windows(window_data, single_window=False):
     for window in window_data:
         normalize_window = []
         for col_i in range(window.shape[1]):
-            normalized_col = [((float(p) / float(window[0, col_i])) - 1) for p in window[:, col_i]]
+            max_in_col = max(window[:, col_i])
+            normalized_col = [(float(p) / float(max_in_col)) for p in window[:, col_i]]
             normalize_window.append(normalized_col)
         normalize_window = np.array(normalize_window).T
         normalized_data.append(normalize_window)
@@ -63,8 +63,6 @@ def get_test_data(data_test, len_test, seq_len, normalise):
 def get_last_data(data_test, seq_len, normalise):
     last_data = data_test[seq_len:]
     data_windows = np.array(last_data).astype(float)
-    # data_windows = np.array([data_windows])
-    # data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
     data_windows = normalize_windows(data_windows, single_window=True) if normalise else data_windows
     return data_windows
 
@@ -79,29 +77,21 @@ def plot_results(predicted_data, true_data):
     ax.plot(true_data, label='True Data')
     plt.plot(predicted_data, label='Prediction')
     plt.legend()
-    plt.show()
-
-
-def plot_results_multiple(predicted_data, true_data, prediction_len):
-    fig = plt.figure(facecolor='white')
-    ax = fig.add_subplot(111)
-    ax.plot(true_data, label='True Data')
-    # Pad the list of predictions to shift it in the graph to it's correct start
-    for i, data in enumerate(predicted_data):
-        padding = [None for p in range(i * prediction_len)]
-        plt.plot(padding + data, label='Prediction')
-        plt.legend()
+    plt.grid()
+    # plt.ylim(0.9, 1)
     plt.show()
 
 
 def main():
     api_connect()
-    df = pd.read_csv('tmp.csv', index_col=0, decimal='.', delimiter=',')
+    # df = pd.read_csv('tmp.csv', index_col=0, decimal='.', delimiter=',')
+    df = pd.read_csv('SBER_000101_211220.csv', index_col=0, decimal='.', delimiter=',')
     print(df)
     # разбиение данных
     split = 0.85
     i_split = int(len(df) * split)
-    cols = ['price', 'time']
+    # cols = ['price', 'time']
+    cols = ['Close', 'Volume']
     data_train = df.get(cols).values[:i_split]
     data_test = df.get(cols).values[i_split:]
     len_train = len(data_train)
@@ -112,7 +102,7 @@ def main():
     sequence_len = 50
     input_dim = 2
     batch_size = 32
-    epochs = 2
+    epochs = 10
 
     model = tf.keras.Sequential([
         tf.keras.layers.LSTM(100, input_shape=(sequence_len - 1, input_dim), return_sequences=True),
@@ -123,7 +113,6 @@ def main():
         tf.keras.layers.Dense(1, activation='linear')
     ])
     model.summary()
-    # tf.keras.utils.plot_model(model, 'multi_input_and_output_model.png', show_shapes=True)
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
     x, y = get_train_data(data_train, len_train, sequence_len, normalize=True)
