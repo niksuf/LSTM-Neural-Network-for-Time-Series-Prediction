@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -11,10 +12,8 @@ def api_connect():
     key = "https://api.binance.com/api/v3/trades?symbol=BTCUSDT"
     data = requests.get(key)
     data = data.json()
-    # [{"id":3083019802,"price":"30248.10000000","qty":"0.04804000","quoteQty":"1453.11872400","time":1681652887637,
-    # "isBuyerMaker":true,"isBestMatch":true}, {}, {}, ...]
     df = pd.DataFrame.from_dict(data)
-    # df['time'] = pd.to_datetime(df['time'], format='%Y%m%d')
+    # df['time'] = pd.to_datetime(df['time'])
     df.to_csv('tmp.csv')
     print(df)
 
@@ -74,6 +73,27 @@ def de_normalize_predict(price_1st, _data):
     return (_data + 1) * price_1st
 
 
+def plot_results(predicted_data, true_data):
+    fig = plt.figure(facecolor='white')
+    ax = fig.add_subplot(111)
+    ax.plot(true_data, label='True Data')
+    plt.plot(predicted_data, label='Prediction')
+    plt.legend()
+    plt.show()
+
+
+def plot_results_multiple(predicted_data, true_data, prediction_len):
+    fig = plt.figure(facecolor='white')
+    ax = fig.add_subplot(111)
+    ax.plot(true_data, label='True Data')
+    # Pad the list of predictions to shift it in the graph to it's correct start
+    for i, data in enumerate(predicted_data):
+        padding = [None for p in range(i * prediction_len)]
+        plt.plot(padding + data, label='Prediction')
+        plt.legend()
+    plt.show()
+
+
 def main():
     api_connect()
     df = pd.read_csv('tmp.csv', index_col=0, decimal='.', delimiter=',')
@@ -112,11 +132,11 @@ def main():
     steps_per_epoch = math.ceil((len_train - sequence_len) / batch_size)
     print(steps_per_epoch)
     callbacks = [EarlyStopping(monitor='mae', patience=2)]
-    # callbacks = [EarlyStopping(monitor='accuracy', patience=2)]
     model.fit(x, y, epochs=epochs, batch_size=batch_size, callbacks=callbacks)
 
     x_test, y_test = get_test_data(data_test, len_test, seq_len=sequence_len, normalise=True)
     print('Test data shapes:', x_test.shape, y_test.shape)
+    print(y_test)
 
     model.evaluate(x_test, y_test, verbose=2)
 
@@ -130,8 +150,14 @@ def main():
     predictions2 = model.predict(last_data_2_predict)
     print(predictions2, predictions2[0][0])
 
-    predicted_price = de_normalize_predict(last_data_2_predict_prices_1st_price, predictions2[0][0])
+    predicted_price = de_normalize_predict(last_data_2_predict_prices_1st_price, predictions2)
     print(predicted_price)
+
+    print('[Model] Predicting Point-by-Point...')
+    predicted = model.predict(x_test)
+    predicted = np.reshape(predicted, (predicted.size,))
+
+    plot_results(predicted, y_test)
 
 
 if __name__ == '__main__':
