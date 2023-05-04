@@ -129,13 +129,14 @@ def api_connect():
     data = data.json()
     df = pd.DataFrame.from_dict(data)
     # df['time'] = pd.to_datetime(df['time'])
-    df.to_csv('tmp.csv')
+    df.to_csv('data/tmp.csv')
     print(df)
 
 
 def plot_results(predicted_data, true_data, y):
     fig = plt.figure(facecolor='white')
     ax = fig.add_subplot(111)
+    # графики
     ax.plot(true_data, label='True Data')
     plt.plot(predicted_data, label='Prediction')
     plt.plot(y, label='y')
@@ -149,7 +150,7 @@ def main():
 
     data = DataLoader(split=0.85, cols=['Close', 'Volume'])
     # data = DataLoader(split=0.85, cols=['price', 'qty'])
-    data.load_data_from_csv('SBER_000101_211220.csv')
+    data.load_data_from_csv('data/SBER_000101_211220.csv')
 
     model = Model()
     model.build_model()
