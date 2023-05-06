@@ -135,11 +135,12 @@ def api_connect():
 
 def plot_results(predicted_data, true_data, y):
     fig = plt.figure(facecolor='white')
-    ax = fig.add_subplot(111)
-    # графики
+    ax = fig.add_subplot(1, 1, 1)
+
     x = []
     for i in range(len(predicted_data)):
         x.append(len(y) - 1 + i)
+
     ax.plot(x, true_data, label='True Data')
     plt.plot(x, predicted_data, label='Prediction')
     plt.plot(y, label='Train data and test data')
